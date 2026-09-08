@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch Video</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
+h3 { color: #333; }
+.btn { background: #0088cc; color: white; border: none; padding: 12px 20px; margin: 8px; border-radius: 8px; font-size: 16px; width: 85%; cursor: pointer; }
+.btn:disabled { background: #ccc; cursor: not-allowed; }
+#watch-btn { background: #28a745; display: none; text-decoration: none; font-weight: bold; width: 85%; box-sizing: border-box; margin: 8px auto; }
+</style>
+</head>
+<body>
+<h3 id="title">Loading Video...</h3>
+<p>ভিডিওটি দেখতে নিচে ৪টি বিজ্ঞাপনে ক্লিক করুন:</p>
+
+<button class="btn" id="btn1" onclick="openAd(1)">Ad 1 দেখুন</button><br>
+<button class="btn" id="btn2" onclick="openAd(2)" disabled>Ad 2 দেখুন</button><br>
+<button class="btn" id="btn3" onclick="openAd(3)" disabled>Ad 3 দেখুন</button><br>
+<button class="btn" id="btn4" onclick="openAd(4)" disabled>Ad 4 দেখুন</button><br>
+<a id="watch-btn" class="btn" href="#" target="_blank">🎬 ভিডিওটি দেখুন</a>
+
+<script>
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+// ========== YOUR SETTINGS ==========
+const BOT_USERNAME = "Earninghub007_bot";
+const SHEET_ID = "1kSIe0OUiM7hJxK9pbxtpSDsXUtHTpZaN88Fkh-EAry4";
+const AD_LINKS = [
+  "https://www.profitableratecpmnetwork.com/s83399btp?key=e8f15723ef770f535af62ddbad7f0d55",
+  "https://www.profitableratecpmnetwork.com/vzgtinnnwy?key=056b9c7d3e925648f8354689c70f7f3a",
+  "https://www.profitableratecpmnetwork.com/z7wt773n?key=efe7f62274edf88cbf68d0f104890bdf",
+  "https://www.profitableratecpmnetwork.com/tqmfpy2101?key=b33f5c370d124f2ddba49dec776e0f6a"
+];
+// ==========================================
+
+let videoId = 1;
+
+function getUrlParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+async function loadVideo() {
+  videoId = getUrlParam('id') || 1;
+  let url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+  try {
+    let res = await fetch(url);
+    let text = await res.text();
+    let json = JSON.parse(text.substr(47).slice(0, -2));
+    let row = json.table.rows[videoId - 1];
+    
+    if(row && row.c[1]) {
+      document.getElementById('title').innerText = row.c[1].v;
+    } else {
+      document.getElementById('title').innerText = "ভিডিও পাওয়া যায়নি!";
+    }
+
+    // গুগল শিটের ৩ নম্বর কলামে (Column C) যদি ভিডিও লিংক থাকে:
+    if(row && row.c[2]) {
+      document.getElementById('watch-btn').href = row.c[2].v;
+    }
+  } catch (e) {
+    document.getElementById('title').innerText = "তথ্য লোড করতে সমস্যা হয়েছে!";
+  }
+}
+
+function openAd(adNumber) {
+  // এড লিংক নতুন ট্যাবে খোলা
+  window.open(AD_LINKS[adNumber - 1], '_blank');
+
+  // বর্তমান বাটন ডিজএবল করা
+  document.getElementById(`btn${adNumber}`).disabled = true;
+
+  // পরবর্তী বাটন এনএবল করা অথবা ওয়াচ বাটন দেখানো
+  if (adNumber < 4) {
+    document.getElementById(`btn${adNumber + 1}`).disabled = false;
+  } else {
+    document.getElementById('watch-btn').style.display = 'inline-block';
+  }
+}
+
+// পেজ লোড হলে ভিডিও ইনফো আনা
+loadVideo();
+</script>
+</body>
+</html>

@@ -1,90 +1,98 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
-h3 { color: #333; }
-.btn { background: #0088cc; color: white; border: none; padding: 12px 20px; margin: 8px; border-radius: 8px; font-size: 16px; width: 85%; cursor: pointer; }
-.btn:disabled { background: #ccc; cursor: not-allowed; }
-#watch-btn { background: #28a745; display: none; text-decoration: none; font-weight: bold; width: 85%; box-sizing: border-box; margin: 8px auto; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watch Video</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #0f0f0f; color: white; padding: 20px; }
+    .btn { background: #ff4757; color: white; border: none; padding: 14px 28px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 15px; }
+    #video-container { display: none; margin-top: 20px; }
+    iframe { width: 100%; max-width: 560px; height: 315px; border: none; border-radius: 8px; }
+    #loading { color: #eccc68; }
+  </style>
 </head>
 <body>
-<h3 id="title">Loading Video...</h3>
-<p>ভিডিওটি দেখতে নিচে ৪টি বিজ্ঞাপনে ক্লিক করুন:</p>
 
-<button class="btn" id="btn1" onclick="openAd(1)">Ad 1 দেখুন</button><br>
-<button class="btn" id="btn2" onclick="openAd(2)" disabled>Ad 2 দেখুন</button><br>
-<button class="btn" id="btn3" onclick="openAd(3)" disabled>Ad 3 দেখুন</button><br>
-<button class="btn" id="btn4" onclick="openAd(4)" disabled>Ad 4 দেখুন</button><br>
-<a id="watch-btn" class="btn" href="#" target="_blank">🎬 ভিডিওটি দেখুন</a>
+  <h2>Video Unlock Korun</h2>
+  <p id="loading">Video data fetch hochhe...</p>
+  
+  <div id="main-content" style="display:none;">
+    <p id="status">Video-টি দেখতে নিচে <b id="count">4</b> বার Ads-এ ক্লিক করুন।</p>
+    <button id="adBtn" class="btn" onclick="watchAd()">Ad Dekhun & Unlock Korun</button>
+  </div>
 
-<script>
-Telegram.WebApp.ready();
-Telegram.WebApp.expand();
+  <!-- Video Player -->
+  <div id="video-container">
+    <h3>Video Unlocked!</h3>
+    <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+  </div>
 
-// ========== YOUR SETTINGS ==========
-const BOT_USERNAME = "Earninghub007_bot";
-const SHEET_ID = "1kSIe0OUiM7hJxK9pbxtpSDsXUtHTpZaN88Fkh-EAry4";
-const AD_LINKS = [
-  "https://www.profitableratecpmnetwork.com/s83399btp?key=e8f15723ef770f535af62ddbad7f0d55",
-  "https://www.profitableratecpmnetwork.com/vzgtinnnwy?key=056b9c7d3e925648f8354689c70f7f3a",
-  "https://www.profitableratecpmnetwork.com/z7wt773n?key=efe7f62274edf88cbf68d0f104890bdf",
-  "https://www.profitableratecpmnetwork.com/tqmfpy2101?key=b33f5c370d124f2ddba49dec776e0f6a"
-];
-// ==========================================
-
-let videoId = 1;
-
-function getUrlParam(name) {
-  return new URLSearchParams(window.location.search).get(name);
-}
-
-async function loadVideo() {
-  videoId = getUrlParam('id') || 1;
-  let url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-  try {
-    let res = await fetch(url);
-    let text = await res.text();
-    let json = JSON.parse(text.substr(47).slice(0, -2));
-    let row = json.table.rows[videoId - 1];
+  <script>
+    // 1. Google Sheet Published CSV Link (CSV option select kore pawa link)
+    const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/1kSIe0OUiM7hJxK9pbxtpSDsXUtHTpZaN88Fkh-EAry4/gviz/tq?tqx=out:csv"; 
     
-    if(row && row.c[1]) {
-      document.getElementById('title').innerText = row.c[1].v;
-    } else {
-      document.getElementById('title').innerText = "ভিডিও পাওয়া যায়নি!";
+    // 2. Adsterra Direct Link
+    const adsterraDirectLink = "https://www.profitableratecpmnetwork.com/vzgtinnnwy?key=056b9c7d3e925648f8354689c70f7f3a"; 
+
+    let targetVideoUrl = "";
+    let adsRemaining = 4;
+
+    // URL theke ID read kora (e.g. ?id=1)
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
+
+    // Fetch Video Link from Google Sheet
+    async function loadVideoData() {
+      if (!videoId) {
+        document.getElementById("loading").innerText = "Error: Video ID paowa jayni!";
+        return;
+      }
+
+      try {
+        const response = await fetch(googleSheetCsvUrl);
+        const csvText = await response.text();
+        
+        // CSV Parse
+        const rows = csvText.split('\n');
+        for (let i = 1; i < rows.length; i++) {
+          const cols = rows[i].split(',');
+          if (cols[0] && cols[0].trim() === videoId.trim()) {
+            targetVideoUrl = cols[1].trim();
+            break;
+          }
+        }
+
+        if (targetVideoUrl) {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("main-content").style.display = "block";
+        } else {
+          document.getElementById("loading").innerText = "Error: Ei ID-r kono video paowa jayni!";
+        }
+      } catch (err) {
+        document.getElementById("loading").innerText = "Data load korte problem hochhe!";
+      }
     }
 
-    // গুগল শিটের ৩ নম্বর কলামে (Column C) যদি ভিডিও লিংক থাকে:
-    if(row && row.c[2]) {
-      document.getElementById('watch-btn').href = row.c[2].v;
+    function watchAd() {
+      if (adsRemaining > 0) {
+        window.open(adsterraDirectLink, '_blank'); 
+
+        adsRemaining--;
+        document.getElementById("count").innerText = adsRemaining;
+
+        if (adsRemaining === 0) {
+          document.getElementById("status").innerText = "Sob Ads dekha sesh! Video niche play korar jonno ready.";
+          document.getElementById("adBtn").style.display = "none";
+          
+          const videoContainer = document.getElementById("video-container");
+          document.getElementById("videoPlayer").src = targetVideoUrl;
+          videoContainer.style.display = "block";
+        }
+      }
     }
-  } catch (e) {
-    document.getElementById('title').innerText = "তথ্য লোড করতে সমস্যা হয়েছে!";
-  }
-}
 
-function openAd(adNumber) {
-  // এড লিংক নতুন ট্যাবে খোলা
-  window.open(AD_LINKS[adNumber - 1], '_blank');
-
-  // বর্তমান বাটন ডিজএবল করা
-  document.getElementById(`btn${adNumber}`).disabled = true;
-
-  // পরবর্তী বাটন এনএবল করা অথবা ওয়াচ বাটন দেখানো
-  if (adNumber < 4) {
-    document.getElementById(`btn${adNumber + 1}`).disabled = false;
-  } else {
-    document.getElementById('watch-btn').style.display = 'inline-block';
-  }
-}
-
-// পেজ লোড হলে ভিডিও ইনফো আনা
-loadVideo();
-</script>
+    loadVideoData();
+  </script>
 </body>
 </html>
